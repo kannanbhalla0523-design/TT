@@ -1,2 +1,207 @@
-# TT
-tt project
+TTproject.cpp
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+class Match {
+public:
+    virtual void startMatch() = 0;
+    virtual ~Match() {}
+};
+class Player {
+protected:
+    string name;
+    int age;
+
+public:
+    Player(string n, int a) : name(n), age(a) {}
+
+    virtual void play() {
+        cout << name << " is playing.\n";
+    }
+
+    string getName() { return name; }
+
+    virtual ~Player() {}
+};
+class Batsman : public Player {
+public:
+    Batsman(string n, int a) : Player(n, a) {}
+
+    void play() override {
+        cout << name << " is batting.\n";
+    }
+};
+
+class Bowler : public Player {
+public:
+    Bowler(string n, int a) : Player(n, a) {}
+
+    void play() override {
+        cout << name << " is bowling.\n";
+    }
+};
+
+class AllRounder : public Player {
+public:
+    AllRounder(string n, int a) : Player(n, a) {}
+
+    void play() override {
+        cout << name << " is an all-rounder.\n";
+    }
+};
+class Team {
+    string name;
+    vector<Player*> players;
+
+public:
+    void setName(string n) { name = n; }
+    string getName() { return name; }
+
+    void addPlayer(Player* p) {
+        players.push_back(p);
+    }
+
+    vector<Player*>& getPlayers() {
+        return players;
+    }
+
+    void clearPlayers() {
+        for (auto p : players)
+            delete p;
+        players.clear();
+    }
+
+    ~Team() {
+        clearPlayers();
+    }
+};
+class CricketMatch : public Match {
+    Team &team1, &team2;   // ✅ reference instead of copy
+
+public:
+    CricketMatch(Team &t1, Team &t2) : team1(t1), team2(t2) {}
+
+    int generateRun() {
+        return rand() % 7;
+    }
+
+    int simulate(Team& team) {
+        int score = 0;
+
+        cout << "\nTeam: " << team.getName() << endl;
+
+        for (auto p : team.getPlayers()) {
+            int r = generateRun();
+            score += r;
+            cout << p->getName() << " scored: " << r << endl;
+        }
+
+        cout << "Total Score: " << score << endl;
+        return score;
+    }
+
+    void startMatch() override {
+        srand(time(0));
+
+        cout << "\n🏏 MATCH STARTED 🏏\n";
+
+        int score1 = simulate(team1);
+        int score2 = simulate(team2);
+
+        cout << "\n===== RESULT =====\n";
+
+        if (score1 > score2)
+            cout << team1.getName() << " wins!\n";
+        else if (score2 > score1)
+            cout << team2.getName() << " wins!\n";
+        else
+            cout << "Match Draw!\n";
+    }
+};
+void addPlayers(Team &team) {
+    int n;
+    cout << "Enter number of players: ";
+    cin >> n;
+
+    team.clearPlayers();  // avoid duplicate players
+
+    for (int i = 0; i < n; i++) {
+        string name;
+        int age, type;
+
+        cout << "\nPlayer " << i + 1 << " name: ";
+        cin >> name;
+        cout << "Age: ";
+        cin >> age;
+
+        cout << "1. Batsman  2. Bowler  3. AllRounder\n";
+        cout << "Choose type: ";
+        cin >> type;
+
+        if (type == 1)
+            team.addPlayer(new Batsman(name, age));
+        else if (type == 2)
+            team.addPlayer(new Bowler(name, age));
+        else
+            team.addPlayer(new AllRounder(name, age));
+    }
+}
+int main() {
+    Team team1, team2;
+    int choice;
+
+    do {
+        cout << "\n===== CRICKET MENU =====\n";
+        cout << "1. Set Team Names\n";
+        cout << "2. Add Players\n";
+        cout << "3. Start Match\n";
+        cout << "4. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1: {
+            string t1, t2;
+            cout << "Enter Team 1 name: ";
+            cin >> t1;
+            cout << "Enter Team 2 name: ";
+            cin >> t2;
+
+            team1.setName(t1);
+            team2.setName(t2);
+            break;
+        }
+
+        case 2:
+            cout << "\nAdding players for Team 1\n";
+            addPlayers(team1);
+
+            cout << "\nAdding players for Team 2\n";
+            addPlayers(team2);
+            break;
+
+        case 3: {
+            if (team1.getPlayers().empty() || team2.getPlayers().empty()) {
+                cout << "Add players first!\n";
+                break;
+            }
+
+            CricketMatch match(team1, team2);
+            match.startMatch();
+            break;
+        }
+
+        case 4:
+            cout << "Exiting...\n";
+            break;
+
+        default:
+            cout << "Invalid choice!\n";
+        }
+
+    } while (choice != 4);
+
+    return 0;
+}
